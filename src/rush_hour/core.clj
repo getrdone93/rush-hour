@@ -24,8 +24,39 @@
                                 :q {:color :256dff :type :truck :location [[] []]}
                                 :r {:color :0eae92 :type :truck :location [[] []]}}})
 
-(def test-board-meta-data {:vehicle {:x {:color :ff0000 :type :car :location [[0 0] [0 1]]}
-                                     :y {:color :ff0000 :type :car :location [[2 2] [4 2]]}}})
+;; (def test-board-meta-data {:vehicle {:x {:color :ff0000 :type :car :location [[2 0] [2 1]]}
+;;                                 :a {:color :60d700 :type :car :location [[0 4] [0 5]]}
+;;                                 :b {:color :ff9e13 :type :car :location [[] []]}
+;;                                 :c {:color :05e2f6 :type :car :location [[] []]}
+;;                                 :d {:color :ff75da :type :car :location [[] []]}
+;;                                 :e {:color :4640bf :type :car :location [[] []]}
+;;                                 :f {:color :3b7b39 :type :car :location [[] []]}
+;;                                 :g {:color :8a8989 :type :car :location [[] []]}
+;;                                 :h {:color :c18862 :type :car :location [[] []]}
+;;                                 :i {:color :fff837 :type :car :location [[] []]}
+;;                                 :j {:color :532d00 :type :car :location [[] []]}
+;;                                 :k {:color :5a9f17 :type :car :location [[] []]}
+;;                                 :o {:color :c1bc32 :type :truck :location [[0 2] [2 2]]}
+;;                                 :p {:color :b71bff :type :truck :location [[3 0] [3 2]]}
+;;                                 :q {:color :256dff :type :truck :location [[3 5] [5 5]]}
+;;                                 :r {:color :0eae92 :type :truck :location [[] []]}}})
+
+(def test-board-meta-data {:vehicle {:x {:color :ff0000 :type :car :location [[] []]}
+                                :a {:color :60d700 :type :car :location [[] []]}
+                                :b {:color :ff9e13 :type :car :location [[] []]}
+                                :c {:color :05e2f6 :type :car :location [[] []]}
+                                :d {:color :ff75da :type :car :location [[] []]}
+                                :e {:color :4640bf :type :car :location [[] []]}
+                                :f {:color :3b7b39 :type :car :location [[] []]}
+                                :g {:color :8a8989 :type :car :location [[] []]}
+                                :h {:color :c18862 :type :car :location [[] []]}
+                                :i {:color :fff837 :type :car :location [[] []]}
+                                :j {:color :532d00 :type :car :location [[] []]}
+                                :k {:color :5a9f17 :type :car :location [[] []]}
+                                :o {:color :c1bc32 :type :truck :location [[3 5] [5 5]]}
+                                :p {:color :b71bff :type :truck :location [[] []]}
+                                :q {:color :256dff :type :truck :location [[] []]}
+                                :r {:color :0eae92 :type :truck :location [[] []]}}})
 
 (defn gen-board [d]
   (mapv #(vec %)
@@ -54,11 +85,12 @@
   (let [img (new BufferedImage d d (. BufferedImage TYPE_INT_ARGB))
         id (. img (getWidth))
         im-graph (. img (getGraphics))
-        thick (Math/round (float (/ (- id (* nsqs sq-dim)) (inc nsqs))))]
+        thick (Math/round (float (/ (- id (* nsqs sq-dim)) (inc nsqs))))
+        on-board-vs (filter #(not= [[] []] ((second %) :location)) (vec vs))]
        (.setColor im-graph (. Color black))
        (.fillRect im-graph 0 0 id id)
        (draw-grid im-graph (- id (* 2 thick)) thick thick thick sq-dim)
-       (draw-cars (vec vs) im-graph sq-dim thick)
+       (draw-cars on-board-vs im-graph sq-dim thick)
        (. g (drawImage img 0 0 nil))
        (. im-graph (dispose))))
 
