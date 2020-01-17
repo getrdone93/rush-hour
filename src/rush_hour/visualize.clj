@@ -1,4 +1,4 @@
-(ns rush-hour.core
+(ns rush-hour.visualize
   (:gen-class))
 
 (import
@@ -8,24 +8,8 @@
 (use '[clojure.string :only (replace-first)])
 
 (def grid-dims {:dim 800 :num-sqs 6 :sq-dim 100})
-;; (def board-meta-data {:vehicle {:x {:color :ff0000 :type :car :location [[] []]}
-;;                                 :a {:color :60d700 :type :car :location [[] []]}
-;;                                 :b {:color :ff9e13 :type :car :location [[] []]}
-;;                                 :c {:color :05e2f6 :type :car :location [[] []]}
-;;                                 :d {:color :ff75da :type :car :location [[] []]}
-;;                                 :e {:color :4640bf :type :car :location [[] []]}
-;;                                 :f {:color :3b7b39 :type :car :location [[] []]}
-;;                                 :g {:color :8a8989 :type :car :location [[] []]}
-;;                                 :h {:color :c18862 :type :car :location [[] []]}
-;;                                 :i {:color :fff837 :type :car :location [[] []]}
-;;                                 :j {:color :532d00 :type :car :location [[] []]}
-;;                                 :k {:color :5a9f17 :type :car :location [[] []]}
-;;                                 :o {:color :c1bc32 :type :truck :location [[] []]}
-;;                                 :p {:color :b71bff :type :truck :location [[] []]}
-;;                                 :q {:color :256dff :type :truck :location [[] []]}
-;;                                 :r {:color :0eae92 :type :truck :location [[] []]}}})
 
-(def test-board-meta-data {:vehicle {:x {:color :ff0000 :type :car :location [[0 2] [1 2]]}
+(def temp-board {:vehicle {:x {:color :ff0000 :type :car :location [[0 2] [1 2]]}
                                 :a {:color :60d700 :type :car :location [[4 0] [5 0]]}
                                 :b {:color :ff9e13 :type :car :location [[] []]}
                                 :c {:color :05e2f6 :type :car :location [[] []]}
@@ -41,10 +25,6 @@
                                 :p {:color :b71bff :type :truck :location [[0 3] [2 3]]}
                                 :q {:color :256dff :type :truck :location [[5 3] [5 5]]}
                                 :r {:color :0eae92 :type :truck :location [[] []]}}})
-
-(defn gen-board [d]
-  (mapv #(vec %)
-        (partition d (take (* d d) (repeat {:vehicle :open})))))
 
 (defn draw-grid [im-graph bd draw-x draw-y border-thick sq-dim]
   (if (< draw-x bd)
@@ -75,17 +55,18 @@
         id (. img (getWidth))
         im-graph (. img (getGraphics))
         thick (Math/round (float (/ (- id (* nsqs sq-dim)) (inc nsqs))))
-        on-board-vs (filter #(not= [[] []] ((second %) :location)) (vec vs))]
+        on-board-vs (filter #(not= [[] []] ((second %) :location)) (vec vs))
+        bd (- id (* 2 thick))]
        (.setColor im-graph (. Color black))
        (.fillRect im-graph 0 0 id id)
-       (draw-grid im-graph (- id (* 2 thick)) thick thick thick sq-dim)
+       (draw-grid im-graph bd thick thick thick sq-dim)
        (draw-cars on-board-vs im-graph sq-dim thick)
        (. g (drawImage img 0 0 nil))
        (. im-graph (dispose))))
 
 (def panel (let [dim (grid-dims :dim)]
              (doto (proxy [JPanel] []
-                     (paint [g] (color-frame g grid-dims test-board-meta-data)))
+                     (paint [g] (color-frame g grid-dims temp-board)))
                  (.setPreferredSize (new Dimension dim dim)))))
 
 (defn frame [] (doto
