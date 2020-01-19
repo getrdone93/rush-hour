@@ -17,9 +17,12 @@
              (= n-end-sp :open)))))
 
 (defn move
-  ([board-veh mv-veh-k mv-func] (move board-veh mv-veh-k mv-func bounds-check space-check))
   ([{board :board
-     {{[[bx by] [ex ey] :as loc] :location} mv-veh-k} :vehicle}
+     {{loc :location} mv-veh-k} :vehicle}
+    mv-veh-k
+    mv-func] (move board loc mv-veh-k mv-func bounds-check space-check))
+  ([board
+    [[bx by] [ex ey] :as loc]
     mv-veh-k
     mv-func
     bc-func
