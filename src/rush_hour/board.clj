@@ -70,6 +70,11 @@
     (reduce (fn [agg [ck [x y]]]
               (assoc-in agg [x y] {:vehicle ck})) board flat-vl))))
 
+(defn invoke-move [{board :board vehs :vehicle} mv-veh-k n-loc]
+  (let [n-vehs (assoc-in vehs [mv-veh-k :location] n-loc)]
+      {:board (sync-meta {:vehicle n-vehs :board board})
+       :vehicle n-vehs}))
+
 (def base-veh {:x {:color :ff0000 :type :car :location [[] []]}
                :a {:color :60d700 :type :car :location [[] []]}
                :b {:color :ff9e13 :type :car :location [[] []]}
