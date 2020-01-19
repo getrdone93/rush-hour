@@ -8,25 +8,29 @@
   (every? true? (map #(and (> % -1) (< % dim))
                      (flatten nums))))
 
+(defn space-check [board veh-key [bx by] [ex ey]]
+  (let [n-bg-sp (-> board (nth bx) (nth by) :vehicle)
+        n-end-sp (-> board (nth ex) (nth ey) :vehicle)]
+    (or (and (= n-bg-sp :open)
+             (= n-end-sp veh-key))
+        (and (= n-bg-sp veh-key)
+             (= n-end-sp :open)))))
+
 (defn move [{board :board
              {{[[bx by] [ex ey] :as loc] :location} mv-veh-k} :vehicle}
             mv-veh-k
             mv-func
-            bc-func]
+            bc-func
+            sc-func]
   (let [dim (count board)
         [[n-bx n-by] [n-ex n-ey] :as n-loc] (if (= bx ex)
                                               [[bx (mv-func by)] [ex (mv-func ey)]]
                                               [[(mv-func bx) by] [(mv-func ex) ey]])]
     (if (bc-func dim [n-bx n-by n-ex n-ey])
-      (let [n-bg-sp (-> board (nth n-bx) (nth n-by) :vehicle)
-            n-end-sp (-> board (nth n-ex) (nth n-ey) :vehicle)]
-        (if (or (and (= n-bg-sp :open)
-                     (= n-end-sp mv-veh-k))
-                (and (= n-bg-sp mv-veh-k)
-                     (= n-end-sp :open)))
-          n-loc
-          loc))
-      loc)))
+      (if (sc-func board mv-veh-k [n-bx n-by] [n-ex n-ey])
+        [n-loc true]
+        [loc false])
+      [loc false])))
 
 (defn enumerate-coords [[bx by] [ex ey]]
   (let [x-rng (range bx (inc ex))
