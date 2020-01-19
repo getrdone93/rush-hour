@@ -56,15 +56,19 @@
     (mapv (fn [x y]
             [x y]) xs ys)))
 
-(defn vehicle-locs [{vhs :vehicle} enum-func]
-  (mapv (fn [[ck {[[bx by :as bg] [ex ey :as ed]] :location}]]
-          (mapv (fn [loc]
-                 [ck loc]) (enum-func bg ed))) vhs))
+(defn vehicle-locs
+  ([vehicles] (vehicle-locs vehicles enumerate-coords))
+  ([vehicles enum-func]
+   (mapv (fn [[ck {[[bx by :as bg] [ex ey :as ed]] :location}]]
+           (mapv (fn [loc]
+                   [ck loc]) (enum-func bg ed))) vehicles)))
 
-(defn sync-meta [{bd :board} veh-locs]
+(defn sync-meta
+  ([{board :board vhs :vehicle}] (sync-meta board (vehicle-locs vhs)))
+  ([board veh-locs]
   (let [flat-vl (mapcat #(identity %) veh-locs)]
     (reduce (fn [agg [ck [x y]]]
-              (assoc-in agg [x y] {:vehicle ck})) bd flat-vl)))
+              (assoc-in agg [x y] {:vehicle ck})) board flat-vl))))
 
 (def base-veh {:x {:color :ff0000 :type :car :location [[] []]}
                :a {:color :60d700 :type :car :location [[] []]}
@@ -89,5 +93,4 @@
                  :p {:color :b71bff :type :truck :location [[0 3] [2 3]]}
                  :q {:color :256dff :type :truck :location [[5 3] [5 5]]}})
 
-(def problem-1 {:vehicle card-1-veh :board (sync-meta {:board (gen-board 6)}
-                                                      (vehicle-locs {:vehicle card-1-veh} enumerate-coords))})
+(def problem-1 {:vehicle card-1-veh :board (sync-meta {:board (gen-board 6) :vehicle card-1-veh})})
