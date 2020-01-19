@@ -16,21 +16,36 @@
         (and (= n-bg-sp veh-key)
              (= n-end-sp :open)))))
 
-(defn move [{board :board
-             {{[[bx by] [ex ey] :as loc] :location} mv-veh-k} :vehicle}
-            mv-veh-k
-            mv-func
-            bc-func
-            sc-func]
-  (let [dim (count board)
-        [[n-bx n-by] [n-ex n-ey] :as n-loc] (if (= bx ex)
-                                              [[bx (mv-func by)] [ex (mv-func ey)]]
-                                              [[(mv-func bx) by] [(mv-func ex) ey]])]
-    (if (bc-func dim [n-bx n-by n-ex n-ey])
-      (if (sc-func board mv-veh-k [n-bx n-by] [n-ex n-ey])
-        [n-loc true]
-        [loc false])
-      [loc false])))
+(defn move
+  ([board-veh mv-veh-k mv-func] (move board-veh mv-veh-k mv-func bounds-check space-check))
+  ([{board :board
+     {{[[bx by] [ex ey] :as loc] :location} mv-veh-k} :vehicle}
+    mv-veh-k
+    mv-func
+    bc-func
+    sc-func]
+   (let [dim (count board)
+         [[n-bx n-by] [n-ex n-ey] :as n-loc] (if (= bx ex)
+                                               [[bx (mv-func by)] [ex (mv-func ey)]]
+                                               [[(mv-func bx) by] [(mv-func ex) ey]])]
+     (if (bc-func dim [n-bx n-by n-ex n-ey])
+       (if (sc-func board mv-veh-k [n-bx n-by] [n-ex n-ey])
+         [n-loc true]
+         [loc false])
+       [loc false]))))
+
+(defn right-or-down [board-veh mv-veh-k]
+  (move board-veh mv-veh-k inc))
+
+(defn left-or-up [board-veh mv-veh-k]
+  (move board-veh mv-veh-k dec))
+
+(defn jiggle [board-veh mv-veh-k]
+  (let [lou (left-or-up board-veh mv-veh-k)
+        rod (right-or-down board-veh mv-veh-k)]
+    {:left-or-up lou
+     :right-or-down rod
+     :movable? (or (second lou) (second rod))}))
 
 (defn enumerate-coords [[bx by] [ex ey]]
   (let [x-rng (range bx (inc ex))
