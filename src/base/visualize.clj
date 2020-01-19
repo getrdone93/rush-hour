@@ -1,4 +1,4 @@
-(ns rush-hour.visualize
+(ns rush-hour.base.visualize
   (:gen-class))
 
 (import
@@ -49,7 +49,7 @@
 
 (def panel (let [dim (grid-dims :dim)]
              (doto (proxy [JPanel] []
-                     (paint [g] (color-frame g grid-dims (rush-hour.board/temp-board :vehicle))))
+                     (paint [g] (color-frame g grid-dims (rush-hour.base.board/temp-board :vehicle))))
                  (.setPreferredSize (new Dimension dim dim)))))
 
 (defn frame [] (doto

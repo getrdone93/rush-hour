@@ -1,4 +1,4 @@
-(ns rush-hour.board)
+(ns rush-hour.base.board)
 
 (defn gen-board [d]
   (mapv #(vec %)
