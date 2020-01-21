@@ -102,3 +102,5 @@
                  :q {:color :256dff :type :truck :location [[5 3] [5 5]]}})
 
 (def problem-1 {:vehicle card-1-veh :board (sync-meta {:board (gen-board 6) :vehicle card-1-veh})})
+
+(def temp-board (invoke-move problem-1 :a (first (left-or-up problem-1 :a))))
