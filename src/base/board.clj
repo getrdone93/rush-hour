@@ -87,11 +87,16 @@
       res))))
 
 (defn all-direct-veh-move
-  ([board-veh mv-veh-k] (all-direct-veh-move board-veh mv-veh-k left-or-up
-                                          right-or-down one-direct-veh-move))
-  ([board-veh mv-veh-k left-move-func right-move-func direct-func]
+  ([board-veh mv-veh-k] (all-direct-veh-move board-veh mv-veh-k left-or-up right-or-down))
+  ([board-veh mv-veh-k left-move-func right-move-func]
    (concat (one-direct-veh-move board-veh mv-veh-k left-move-func)
            (one-direct-veh-move board-veh mv-veh-k right-move-func))))
+
+(defn move-all-vehicles
+  ([board-veh] (move-all-vehicles board-veh all-direct-veh-move))
+  ([{board :board vehs :vehicle :as board-veh} all-dvm-func]
+   (reduce (fn [agg ck]
+             (assoc agg ck (all-dvm-func board-veh ck))) {} (keys vehs))))
 
 (def base-veh {:x {:color :ff0000 :type :car :location [[] []]}
                :a {:color :60d700 :type :car :location [[] []]}
@@ -121,6 +126,6 @@
 (def test-problem {:vehicle test-veh :board (sync-meta {:board (six-board) :vehicle test-veh})})
 (def problem-1 {:vehicle card-1-veh :board (sync-meta {:board (six-board) :vehicle card-1-veh})})
 
-(def temp-board (invoke-move problem-1 :a (first (left-or-up problem-1 :a))))
+(def temp-board problem-1)
 
 (defn frame [] (rush-hour.base.visualize/frame))
