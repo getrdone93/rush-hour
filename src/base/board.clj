@@ -4,6 +4,8 @@
   (mapv #(vec %)
         (partition d (take (* d d) (repeat {:vehicle :open})))))
 
+(defn six-board [] (gen-board 6))
+
 (defn bounds-check [dim nums]
   (every? true? (map #(and (> % -1) (< % dim))
                      (flatten nums))))
@@ -43,13 +45,6 @@
 (defn left-or-up [board-veh mv-veh-k]
   (move board-veh mv-veh-k dec))
 
-(defn jiggle [board-veh mv-veh-k]
-  (let [lou (left-or-up board-veh mv-veh-k)
-        rod (right-or-down board-veh mv-veh-k)]
-    {:left-or-up lou
-     :right-or-down rod
-     :movable? (or (second lou) (second rod))}))
-
 (defn enumerate-coords [[bx by] [ex ey]]
   (let [x-rng (range bx (inc ex))
         y-rng (range by (inc ey))
@@ -67,7 +62,7 @@
                    [ck loc]) (enum-func bg ed))) vehicles)))
 
 (defn sync-meta
-  ([{board :board vhs :vehicle}] (sync-meta board (vehicle-locs vhs)))
+  ([{vhs :vehicle}] (sync-meta (six-board) (vehicle-locs vhs)))
   ([board veh-locs]
   (let [flat-vl (mapcat #(identity %) veh-locs)]
     (reduce (fn [agg [ck [x y]]]
@@ -77,6 +72,26 @@
   (let [n-vehs (assoc-in vehs [mv-veh-k :location] n-loc)]
       {:board (sync-meta {:vehicle n-vehs :board board})
        :vehicle n-vehs}))
+
+(defn one-direct-veh-move
+  ([board-veh mv-veh-k move-func] (one-direct-veh-move board-veh mv-veh-k move-func []))
+  ([{board :board
+    {{loc :location} mv-veh-k :as vehs} :vehicle :as board-veh}
+   mv-veh-k
+   move-func
+   res]
+  (let [[loc val] (move-func board-veh mv-veh-k)]
+    (if val
+      (let [new-board-veh (invoke-move board-veh mv-veh-k loc)]
+        (one-direct-veh-move new-board-veh mv-veh-k move-func (conj res new-board-veh)))
+      res))))
+
+(defn all-direct-veh-move
+  ([board-veh mv-veh-k] (all-direct-veh-move board-veh mv-veh-k left-or-up
+                                          right-or-down one-direct-veh-move))
+  ([board-veh mv-veh-k left-move-func right-move-func direct-func]
+   (concat (one-direct-veh-move board-veh mv-veh-k left-move-func)
+           (one-direct-veh-move board-veh mv-veh-k right-move-func))))
 
 (def base-veh {:x {:color :ff0000 :type :car :location [[] []]}
                :a {:color :60d700 :type :car :location [[] []]}
@@ -101,6 +116,11 @@
                  :p {:color :b71bff :type :truck :location [[0 3] [2 3]]}
                  :q {:color :256dff :type :truck :location [[5 3] [5 5]]}})
 
-(def problem-1 {:vehicle card-1-veh :board (sync-meta {:board (gen-board 6) :vehicle card-1-veh})})
+(def test-veh {:x {:color :ff0000 :type :car :location [[2 2] [2 3]]}})
+
+(def test-problem {:vehicle test-veh :board (sync-meta {:board (six-board) :vehicle test-veh})})
+(def problem-1 {:vehicle card-1-veh :board (sync-meta {:board (six-board) :vehicle card-1-veh})})
 
 (def temp-board (invoke-move problem-1 :a (first (left-or-up problem-1 :a))))
+
+(defn frame [] (rush-hour.base.visualize/frame))
