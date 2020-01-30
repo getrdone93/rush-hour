@@ -76,21 +76,22 @@
 (defn one-direct-veh-move
   ([board-veh mv-veh-k move-func] (one-direct-veh-move board-veh mv-veh-k move-func []))
   ([{board :board
-    {{loc :location} mv-veh-k :as vehs} :vehicle :as board-veh}
-   mv-veh-k
-   move-func
-   res]
-  (let [[loc val] (move-func board-veh mv-veh-k)]
-    (if val
-      (let [new-board-veh (invoke-move board-veh mv-veh-k loc)]
-        (one-direct-veh-move new-board-veh mv-veh-k move-func (conj res new-board-veh)))
-      res))))
+     {{loc :location} mv-veh-k :as vehs} :vehicle :as board-veh}
+    mv-veh-k
+    move-func
+    res]
+   (let [[loc val] (move-func board-veh mv-veh-k)]
+     (if val
+       (let [{{{new-loc :location} mv-veh-k} :vehicle
+              :as new-board-veh} (invoke-move board-veh mv-veh-k loc)]
+         (one-direct-veh-move new-board-veh mv-veh-k move-func (conj res new-loc)))
+       res))))
 
 (defn all-direct-veh-move
   ([board-veh mv-veh-k] (all-direct-veh-move board-veh mv-veh-k left-or-up right-or-down))
   ([board-veh mv-veh-k left-move-func right-move-func]
-   (concat (one-direct-veh-move board-veh mv-veh-k left-move-func)
-           (one-direct-veh-move board-veh mv-veh-k right-move-func))))
+   (vec (concat (one-direct-veh-move board-veh mv-veh-k left-move-func)
+                   (one-direct-veh-move board-veh mv-veh-k right-move-func)))))
 
 (defn move-all-vehicles
   ([board-veh] (move-all-vehicles board-veh all-direct-veh-move))
