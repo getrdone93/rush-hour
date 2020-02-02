@@ -64,7 +64,7 @@
 (defn sync-meta
   ([{vhs :vehicle}] (sync-meta (six-board) (vehicle-locs vhs)))
   ([board veh-locs]
-  (let [flat-vl (mapcat #(identity %) veh-locs)]
+  (let [flat-vl (apply concat veh-locs)]
     (reduce (fn [agg [ck [x y]]]
               (assoc-in agg [x y] {:vehicle ck})) board flat-vl))))
 
