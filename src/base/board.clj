@@ -84,7 +84,7 @@
      (if val
        (let [{{{new-loc :location} mv-veh-k} :vehicle
               :as new-board-veh} (invoke-move board-veh mv-veh-k loc)]
-         (one-direct-veh-move new-board-veh mv-veh-k move-func (conj res new-loc)))
+         (one-direct-veh-move new-board-veh mv-veh-k move-func (into res new-loc)))
        res))))
 
 (defn all-direct-veh-move
@@ -98,6 +98,10 @@
   ([{board :board vehs :vehicle :as board-veh} all-dvm-func]
    (reduce (fn [agg ck]
              (assoc agg ck (all-dvm-func board-veh ck))) {} (keys vehs))))
+
+(defn end-state? [{{{loc :location} obj-k} :vehicle}
+                       obj-k]
+  (= loc [[4 2] [5 2]]))
 
 (def base-veh {:x {:color :ff0000 :type :car :location [[] []]}
                :a {:color :60d700 :type :car :location [[] []]}
@@ -129,4 +133,6 @@
 
 (def temp-board problem-1)
 
-(defn frame [] (rush-hour.base.visualize/frame))
+;;(defn frame [] (rush-hour.base.visualize/frame))
+
+
