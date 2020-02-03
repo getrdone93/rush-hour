@@ -52,41 +52,33 @@
     fl-func
     es-func
     obj-k]
-   (map (fn [[ck ms]]
-          [ck (vec (mapcat #(identity %) (filter (fn [[sp ep]]
-                        (let [n-bv (inv-move-func board-veh ck [sp ep])
-                              new-moves (move-av-func n-bv)
-                              fvs (fvs-func new-moves moves)
-                              fls (fl-func new-moves moves ck)
-                              end? (es-func n-bv obj-k)]
-                          (or (> (apply + (map #(count %) [fvs fls])) 0) end?))) (partition 2 ms))))]) moves)))
+   (filter (fn [[ck mvs]]
+             (not (empty? mvs))) (map (fn [[ck ms]]
+          [ck (vec (apply concat
+                           (filter (fn [[sp ep]]
+                                     (let [n-bv (inv-move-func board-veh ck [sp ep])
+                                           new-moves (move-av-func n-bv)
+                                           end? (es-func n-bv obj-k)]
+                                       (or (> (apply + (map #(count %) [(fvs-func new-moves moves)
+                                                                        (fl-func new-moves moves ck)])) 0) end?)))
+                                   (partition 2 ms))))]) moves)) ))
 
-;; (defn optimal-paths
-;;   ([board-veh] (optimal-paths board-veh board/move-all-vehicles board/invoke-move))
-;;   ([{board :board veh :vehicle :as board-veh}
-;;     move-av-func
-;;     inv-move-func]
-;;    (let [opt-moves ]
-;;      )))
-
-;; (defn optimal-paths
-;;   ([board-veh] (optimal-paths board-veh board/move-all-vehicles board/invoke-move [] []))
-;;   ([{board :board veh :vehicle :as board-veh}
-;;     move-av-func
-;;     inv-move-func
-;;     current-path
-;;     all-paths]
-;;    (let [moves (vec (filter (fn [[ck moves]]
-;;                              (not (empty? moves)))
-;;                            (move-av-func board-veh)))
-;;          _ (println moves)]
-;;      ((fn [[[ck [sp ep & rest-points]] & vehs :as am] bv cp ap]
-;;         (if (some? ck)
-;;           (let [n-ap (optimal-paths (inv-move-func bv ck [sp ep]) move-av-func inv-move-func
-;;                                     (conj cp [ck [sp ep]]) ap)]
-;;             (if (some? rest-points)
-;;               (recur (assoc 0 [ck rest-points]) bv cp n-ap)
-;;               (recur vehs bv cp n-ap)))
-;;           (if (empty? am)
-;;             (conj ap cp)
-;;             ap))) moves board-veh current-path all-paths))))
+(defn optimal-paths
+  ([board-veh obj-k]
+   (optimal-paths
+    board-veh
+    (optimal-moves board-veh obj-k)
+    board/invoke-move
+    obj-k
+    []
+    []))
+  ([board-veh
+    opt-moves
+    inv-move-func
+    obj-k
+    curr-path
+    all-paths]
+   ((fn [[[[ck [s1 e1 & res-moves]] & res]] cp aps]
+      (if (nil? ck)
+        all-paths
+        )) opt-moves curr-path all-paths) ))
