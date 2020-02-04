@@ -61,24 +61,35 @@
                                            end? (es-func n-bv obj-k)]
                                        (or (> (apply + (map #(count %) [(fvs-func new-moves moves)
                                                                         (fl-func new-moves moves ck)])) 0) end?)))
-                                   (partition 2 ms))))]) moves)) ))
+                                   (partition 2 ms))))]) moves))))
 
 (defn optimal-paths
   ([board-veh obj-k]
    (optimal-paths
     board-veh
     (optimal-moves board-veh obj-k)
+    board/end-state?
+    optimal-moves
     board/invoke-move
     obj-k
     []
     []))
   ([board-veh
     opt-moves
+    es-func?
+    opt-move-func
     inv-move-func
     obj-k
     curr-path
-    all-paths]
-   ((fn [[[[ck [s1 e1 & res-moves]] & res]] cp aps]
+    opt-paths]
+   ((fn [[[ck [s1 e1 & res-ps]] & res-vehs] cp ops]
       (if (nil? ck)
-        all-paths
-        )) opt-moves curr-path all-paths) ))
+        (if (es-func? board-veh)
+          (conj ops cp)
+          ops)
+        (let [n-aps (optimal-paths (inv-move-func board-veh ck [s1 e1]) (opt-move-func board-veh obj-k)
+                              es-func? opt-move-func inv-move-func obj-k (conj cp [ck [s1 e1]]) ops)]
+          (cond
+            (not (empty? res-ps)) (recur (conj res-vehs [ck (vec res-ps)]) cp ops)
+            (not (empty? res-vehs)) (recur res-vehs cp ops)
+            true ops)))) opt-moves curr-path opt-paths)))
