@@ -53,43 +53,49 @@
     es-func
     obj-k]
    (filter (fn [[ck mvs]]
-             (not (empty? mvs))) (map (fn [[ck ms]]
-          [ck (vec (apply concat
-                           (filter (fn [[sp ep]]
-                                     (let [n-bv (inv-move-func board-veh ck [sp ep])
-                                           new-moves (move-av-func n-bv)
-                                           end? (es-func n-bv obj-k)]
-                                       (or (> (apply + (map #(count %) [(fvs-func new-moves moves)
-                                                                        (fl-func new-moves moves ck)])) 0) end?)))
-                                   (partition 2 ms))))]) moves))))
+             (not (empty? mvs)))
+           (map (fn [[ck ms]]
+                  [ck (if (= ck obj-k)
+                        (vec (take-last 2 ms))
+                        (vec (apply concat
+                                  (filter (fn [[sp ep]]
+                                            (let [n-bv (inv-move-func board-veh ck [sp ep])
+                                                  new-moves (move-av-func n-bv)
+                                                  end? (es-func n-bv obj-k)]
+                                              (or (> (apply + (map #(count %) [(fvs-func new-moves moves)
+                                                                               (fl-func new-moves moves ck)])) 0) end?)))
+                                          (partition 2 ms)))))]) moves))))
+
+(defn flatten-moves [moves]
+  (apply concat (map (fn [[ck mvs]]
+                       (let [ms (partition 2 mvs)]
+                         (map (fn [k m] 
+                                [k (vec m)]) (take (count ms) (repeat ck)) ms))) moves)))
 
 (defn optimal-paths
   ([board-veh obj-k]
-   (optimal-paths
-    board-veh
-    (optimal-moves board-veh obj-k)
-    board/end-state?
-    optimal-moves
-    board/invoke-move
-    obj-k
-    []
-    []))
-  ([board-veh
-    opt-moves
-    es-func?
-    opt-move-func
-    inv-move-func
-    obj-k
-    curr-path
-    opt-paths]
-   ((fn [[[ck [s1 e1 & res-ps]] & res-vehs] cp ops]
-      (if (nil? ck)
-        (if (es-func? board-veh)
-          (conj ops cp)
-          ops)
-        (let [n-aps (optimal-paths (inv-move-func board-veh ck [s1 e1]) (opt-move-func board-veh obj-k)
-                              es-func? opt-move-func inv-move-func obj-k (conj cp [ck [s1 e1]]) ops)]
-          (cond
-            (not (empty? res-ps)) (recur (conj res-vehs [ck (vec res-ps)]) cp ops)
-            (not (empty? res-vehs)) (recur res-vehs cp ops)
-            true ops)))) opt-moves curr-path opt-paths)))
+   (optimal-paths board-veh (flatten-moves (optimal-moves board-veh obj-k)) board/end-state? 
+                  optimal-moves flatten-moves board/invoke-move obj-k [] #{} #{board-veh}))
+  ([board-veh moves es-func? gen-moves-func flat-func inv-move-func obj-k curr-path all-paths traveled]
+     (if (es-func? board-veh obj-k)
+       (conj all-paths curr-path)
+       ((fn [[[ck mp] & res] trav cp aps]
+                            (if (nil? ck)
+                              aps
+                              (let [n-bv (inv-move-func board-veh ck mp)]
+                                (if (contains? trav n-bv)
+                                  (recur res trav cp aps)
+                                  (let [n-aps (optimal-paths n-bv (flat-func (gen-moves-func n-bv obj-k)) es-func?
+                                                             gen-moves-func flat-func inv-move-func obj-k (conj cp [ck mp])
+                                                             aps (conj trav n-bv))]
+                                    (recur res trav cp (clojure.set/union aps n-aps)))))))
+        moves traveled curr-path all-paths))))
+
+(defn draw-frames
+  ([bvs] (draw-frames bvs 0 (count bvs)))
+  ([[b & bvs] c t]
+   (if (nil? b)
+     "done"
+     (do
+       (rush-hour.base.visualize/frame b c)
+       (recur bvs (inc c) t)))))

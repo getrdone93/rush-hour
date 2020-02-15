@@ -4,7 +4,7 @@
 (import
  '(java.awt Color Dimension)
  '(java.awt.image BufferedImage)
- '(javax.swing JPanel JFrame))
+ '(javax.swing JPanel JFrame JTextField))
 (use '[clojure.string :only (replace-first)])
 
 (def grid-dims {:dim 800 :num-sqs 6 :sq-dim 100})
@@ -47,16 +47,19 @@
        (. g (drawImage img 0 0 nil))
        (. im-graph (dispose))))
 
-(def panel (let [dim (grid-dims :dim)]
+(defn new-panel [{veh :vehicle}]
+  (let [dim (grid-dims :dim)]
              (doto (proxy [JPanel] []
-                     (paint [g] (color-frame g grid-dims (rush-hour.base.board/temp-board :vehicle))))
+                     (paint [g] (color-frame g grid-dims veh)))
                  (.setPreferredSize (new Dimension dim dim)))))
 
-(defn frame [] (doto
-                 (new JFrame)
-                 (-> (.getContentPane) (.add panel))
-                 .pack
-                 .show))
+(defn frame [bv frame-title]
+  (doto
+    (new JFrame)
+    (.setTitle (str frame-title))
+    (-> (.getContentPane) (.add (new-panel bv)))
+    .pack
+    .show))
 
 (defn -main
   "I don't do a whole lot ... yet."

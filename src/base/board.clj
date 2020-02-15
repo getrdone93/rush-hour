@@ -133,6 +133,5 @@
 
 (def temp-board problem-1)
 
-;;(defn frame [] (rush-hour.base.visualize/frame))
 
 
