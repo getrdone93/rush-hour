@@ -129,7 +129,7 @@
                :d {:color :ff75da :type :car :location [[] []]}
                :e {:color :4640bf :type :car :location [[] []]}
                :f {:color :3b7b39 :type :car :location [[] []]}
-               :g {:color :8a8989 :type :car :location [[] []]}
+               :g {:color :ebeef2 :type :car :location [[] []]}
                :h {:color :c18862 :type :car :location [[] []]}
                :i {:color :fff837 :type :car :location [[] []]}
                :j {:color :532d00 :type :car :location [[] []]}
@@ -145,12 +145,31 @@
                  :p {:color :b71bff :type :truck :location [[0 3] [2 3]]}
                  :q {:color :256dff :type :truck :location [[5 3] [5 5]]}})
 
-(def test-veh {:x {:color :ff0000 :type :car :location [[2 2] [2 3]]}})
+(def card-2-veh {:o {:color :c1bc32 :type :truck :location [[2 0] [2 2]]}
+                 :x {:color :ff0000 :type :car :location [[3 2] [4 2]]}
+                 :p {:color :b71bff :type :truck :location [[5 1] [5 3]]}
+                 :q {:color :256dff :type :truck :location [[0 3] [2 3]]}
+                 :a {:color :60d700 :type :car :location [[3 3] [3 4]]}
+                 :b {:color :ff9e13 :type :car :location [[4 4] [5 4]]}})
 
-(def test-problem {:vehicle test-veh :board (sync-meta {:board (six-board) :vehicle test-veh})})
+(def card-40-veh {:a {:color :60d700 :type :car :location [[0 0] [0 1]]}
+                  :b {:color :ff9e13 :type :car :location [[1 0] [2 0]]}
+                  :o {:color :c1bc32 :type :truck :location [[3 0] [5 0]]}
+                  :c {:color :05e2f6 :type :car :location [[2 1] [3 1]]}
+                  :d {:color :ff75da :type :car :location [[4 1] [4 2]]}
+                  :x {:color :ff0000 :type :car :location [[0 2] [1 2]]}
+                  :e {:color :4640bf :type :car :location [[2 2] [2 3]]}
+                  :g {:color :ebeef2 :type :car :location [[3 3] [4 3]]}
+                  :f {:color :3b7b39 :type :car :location [[0 3] [1 3]]}
+                  :p {:color :b71bff :type :truck :location [[5 3] [5 5]]}
+                  :h {:color :c18862 :type :car :location [[1 4] [2 4]]}
+                  :q {:color :256dff :type :truck :location [[0 5] [2 5]]}
+                  :i {:color :fff837 :type :car :location [[3 4] [3 5]]}})
+
 (def problem-1 {:vehicle card-1-veh :board (sync-meta {:board (six-board) :vehicle card-1-veh})})
+(def problem-2 {:vehicle card-2-veh :board (sync-meta {:board (six-board) :vehicle card-2-veh})})
+(def problem-40 {:vehicle card-40-veh :board (sync-meta {:board (six-board) :vehicle card-40-veh})})
 
-(def temp-board problem-1)
 
 
 

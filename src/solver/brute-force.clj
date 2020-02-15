@@ -75,18 +75,23 @@
 (defn enumerate-paths
   ([board-veh obj-k]
    (enumerate-paths board-veh (flatten-moves (optimal-moves board-veh obj-k)) board/end-state? 
-                  optimal-moves flatten-moves board/invoke-move obj-k [] #{} #{board-veh}))
-  ([board-veh moves es-func? gen-moves-func flat-func inv-move-func obj-k curr-path all-paths traveled]
+                    optimal-moves flatten-moves board/invoke-move obj-k [] #{} #{board-veh} 0 Integer/MAX_VALUE))
+  ([board-veh moves es-func? gen-moves-func flat-func inv-move-func obj-k curr-path all-paths traveled
+    depth max-depth]
+   (if (> depth max-depth)
+     [all-paths max-depth]
      (if (es-func? board-veh obj-k)
-       (conj all-paths curr-path)
-       ((fn [[[ck mp] & res] trav cp aps]
-                            (if (nil? ck)
-                              aps
-                              (let [n-bv (inv-move-func board-veh ck mp)]
-                                (if (contains? trav n-bv)
-                                  (recur res trav cp aps)
-                                  (let [n-aps (enumerate-paths n-bv (flat-func (gen-moves-func n-bv obj-k)) es-func?
-                                                             gen-moves-func flat-func inv-move-func obj-k (conj cp [ck mp])
-                                                             aps (conj trav n-bv))]
-                                    (recur res trav cp (clojure.set/union aps n-aps)))))))
-        moves traveled curr-path all-paths))))
+       (do
+         (println "hit end state, depth: " depth)
+         [(conj all-paths curr-path) depth])
+       ((fn [[[ck mp] & res] trav cp aps md]
+          (if (nil? ck)
+            [aps md]
+            (let [n-bv (inv-move-func board-veh ck mp)]
+              (if (contains? trav n-bv)
+                (recur res trav cp aps md)
+                (let [[n-aps nd] (enumerate-paths n-bv (flat-func (gen-moves-func n-bv obj-k)) es-func?
+                                             gen-moves-func flat-func inv-move-func obj-k (conj cp [ck mp])
+                                             aps (conj trav n-bv) (inc depth) md)]
+                  (recur res trav cp (clojure.set/union aps n-aps) nd))))))
+        moves traveled curr-path all-paths max-depth)))))
