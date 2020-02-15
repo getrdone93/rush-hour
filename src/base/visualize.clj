@@ -61,6 +61,15 @@
     .pack
     .show))
 
+(defn draw-frames
+  ([bvs] (draw-frames bvs 0 (count bvs) frame))
+  ([[b & bvs] c t frame-func]
+   (if (nil? b)
+     "done"
+     (do
+       (frame-func b c)
+       (recur bvs (inc c) t frame-func)))))
+
 (defn -main
   "I don't do a whole lot ... yet."
   [& args]

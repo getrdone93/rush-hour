@@ -103,6 +103,25 @@
                        obj-k]
   (= loc [[4 2] [5 2]]))
 
+(defn turing-machine
+  ([start-state actions obj-k]
+   (turing-machine start-state actions invoke-move end-state? obj-k []))
+  ([current-state [[ck mp] & actions] inv-move-func end-state-func obj-k states]
+   (if (and (nil? ck) (nil? actions))
+     (if (end-state-func current-state obj-k)
+       [true states]
+       [false states])
+     (let [next-state (inv-move-func current-state ck mp)]
+       (turing-machine next-state actions inv-move-func end-state-func obj-k (conj states next-state))))))
+
+(defn optimal-paths [board-veh obj-k enumerate-func]
+  (let [[valid invalid] (partition-by #(true? (first %))
+                          (map #(turing-machine board-veh % obj-k)
+                               (first (partition-by count
+                                                    (sort-by count
+                                                             (enumerate-func board-veh obj-k))))))]
+    {:valid (mapv second valid) :invalid (mapv second invalid)}))
+
 (def base-veh {:x {:color :ff0000 :type :car :location [[] []]}
                :a {:color :60d700 :type :car :location [[] []]}
                :b {:color :ff9e13 :type :car :location [[] []]}

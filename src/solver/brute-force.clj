@@ -72,9 +72,9 @@
                          (map (fn [k m] 
                                 [k (vec m)]) (take (count ms) (repeat ck)) ms))) moves)))
 
-(defn optimal-paths
+(defn enumerate-paths
   ([board-veh obj-k]
-   (optimal-paths board-veh (flatten-moves (optimal-moves board-veh obj-k)) board/end-state? 
+   (enumerate-paths board-veh (flatten-moves (optimal-moves board-veh obj-k)) board/end-state? 
                   optimal-moves flatten-moves board/invoke-move obj-k [] #{} #{board-veh}))
   ([board-veh moves es-func? gen-moves-func flat-func inv-move-func obj-k curr-path all-paths traveled]
      (if (es-func? board-veh obj-k)
@@ -85,17 +85,8 @@
                               (let [n-bv (inv-move-func board-veh ck mp)]
                                 (if (contains? trav n-bv)
                                   (recur res trav cp aps)
-                                  (let [n-aps (optimal-paths n-bv (flat-func (gen-moves-func n-bv obj-k)) es-func?
+                                  (let [n-aps (enumerate-paths n-bv (flat-func (gen-moves-func n-bv obj-k)) es-func?
                                                              gen-moves-func flat-func inv-move-func obj-k (conj cp [ck mp])
                                                              aps (conj trav n-bv))]
                                     (recur res trav cp (clojure.set/union aps n-aps)))))))
         moves traveled curr-path all-paths))))
-
-(defn draw-frames
-  ([bvs] (draw-frames bvs 0 (count bvs)))
-  ([[b & bvs] c t]
-   (if (nil? b)
-     "done"
-     (do
-       (rush-hour.base.visualize/frame b c)
-       (recur bvs (inc c) t)))))
