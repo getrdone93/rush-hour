@@ -56,7 +56,7 @@
              (not (empty? mvs)))
            (map (fn [[ck ms]]
                   [ck (if (= ck obj-k)
-                        (vec (take-last 2 ms))
+                        (vec ms)
                         (vec (apply concat
                                   (filter (fn [[sp ep]]
                                             (let [n-bv (inv-move-func board-veh ck [sp ep])
@@ -65,6 +65,21 @@
                                               (or (> (apply + (map #(count %) [(fvs-func new-moves moves)
                                                                                (fl-func new-moves moves ck)])) 0) end?)))
                                           (partition 2 ms)))))]) moves))))
+(defn compress-moves
+  ([board-veh obj-k]
+   (compress-moves board-veh (optimal-moves board-veh obj-k) movable-vehs freed-vehs freed-locs board/invoke-move obj-k))
+  ([board-veh moves move-av-func fv-func fl-func inv-move-func obj-k]
+   (map (fn [[ck mvs]]
+          [ck (if (= ck obj-k)
+                (vec (take-last 2 mvs))
+                (vec (apply concat (vals (reduce (fn [agg mvs]
+                                                   (assoc agg [(second mvs) (last mvs)] (first mvs)))
+                                                 {} (map (fn [mv]
+                                                           (let [n-bv (inv-move-func board-veh ck mv)
+                                                                 n-moves (move-av-func n-bv)]
+                                                             [mv (fv-func n-moves board-veh)
+                                                              (fl-func n-moves board-veh ck)]))
+                                                         (partition 2 mvs)))))))]) moves)))
 
 (defn flatten-moves [moves]
   (apply concat (map (fn [[ck mvs]]
@@ -74,8 +89,8 @@
 
 (defn enumerate-paths
   ([board-veh obj-k]
-   (enumerate-paths board-veh (flatten-moves (optimal-moves board-veh obj-k)) board/end-state? 
-                    optimal-moves flatten-moves board/invoke-move obj-k [] #{} #{board-veh} 0 Integer/MAX_VALUE))
+   (enumerate-paths board-veh (flatten-moves (compress-moves board-veh obj-k)) board/end-state?
+                    compress-moves flatten-moves board/invoke-move obj-k [] #{} #{board-veh} 0 Integer/MAX_VALUE))
   ([board-veh moves es-func? gen-moves-func flat-func inv-move-func obj-k curr-path all-paths traveled
     depth max-depth]
    (if (> depth max-depth)
