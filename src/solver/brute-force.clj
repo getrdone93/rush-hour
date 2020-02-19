@@ -2,23 +2,33 @@
   (:require [rush-hour.base.board :as board]))
 
 (defn movable-vehs
+  "Given board-veh, invokes move-all-vehicles by default and
+   returns [[vehicle-key [m1 m2 m3...]]...]. every [m1 m2 m3...]
+   is guaranteed to be non empty."
   ([board-veh] (movable-vehs board-veh board/move-all-vehicles))
   ([board-veh
     move-av-func] (vec (filter (fn [[ck moves]]
                                  (not (empty? moves)))
                                (move-av-func board-veh)))))
 
-(defn vec-to-map [in-vec]
+(defn vec-to-map
+  "Takes in [[k1 v] [k2 v]] and returns {:k1 v :k2 v}."
+  [in-vec]
   (reduce (fn [agg [k v]]
             (assoc agg k v)) {} in-vec))
 
 (defn coords-to-moves
+  "Takes in [[p1] [p2]...] and returns {[p1 p2]...} as each
+   pair of points is a move."
   ([coords]
    (coords-to-moves coords set))
   ([coords out-func]
    (out-func (mapv #(vec %) (partition 2 coords)))))
 
 (defn freed-vehs
+  "Returns a {:k1 :k2 :k3...} which represents the vehicles that
+   are freed to move from an old state to a new state. new-moves
+   and old-moves are the moves from the old and new states respectively."
   ([new-moves old-moves]
    (freed-vehs new-moves old-moves vec-to-map))
   ([new-moves old-moves vtm-func]
@@ -26,6 +36,10 @@
                            (set (keys (vtm-func old-moves))))))
 
 (defn freed-locs
+  "Returns a {:k1 :k2 :k3...} which represents vehicles that can move
+   across two states, but can move to a different spot in the new state.
+   new-moves and old-moves are the moves from the old and new states
+   respectively."
   ([new-moves old-moves veh-mov-key]
    (freed-locs new-moves old-moves veh-mov-key vec-to-map coords-to-moves))
   ([new-moves old-moves veh-mov-key vtm-func ctm-func]
@@ -35,6 +49,9 @@
                             k)) (clojure.set/intersection (set (keys nm)) (set (keys om)))))) #{veh-mov-key}))))
 
 (defn optimal-moves
+  "Uses freed-vehs and freed-locs among others to compute the optimal-moves
+   in a given state (i.e. board-veh). The obj-k's moves are left alone as
+   those are handled elsewhere. Shape of result is [[k [m1 m2 m3...]]...]."
   ([board-veh obj-k]
    (optimal-moves board-veh
                   (movable-vehs board-veh)
@@ -66,6 +83,9 @@
                                                                                (fl-func new-moves moves ck)])) 0) end?)))
                                           (partition 2 ms)))))]) moves))))
 (defn compress-moves
+  "Provides the meaning of equality between two moves by hashing their freed-vehs and freed-locs
+   sets. The last move is taken for a given vehicle. By default, the last move of obj-k is taken
+   as this has produced the best results so far. Shape of return is [[k [m1 m2 m3...]]...]."
   ([board-veh obj-k]
    (compress-moves board-veh (optimal-moves board-veh obj-k) movable-vehs freed-vehs freed-locs board/invoke-move obj-k))
   ([board-veh moves move-av-func fv-func fl-func inv-move-func obj-k]
@@ -81,13 +101,17 @@
                                                               (fl-func n-moves board-veh ck)]))
                                                          (partition 2 mvs)))))))]) moves)))
 
-(defn flatten-moves [moves]
+(defn flatten-moves
+  "Takes in [[ck [m1 m2 m3...]]...] and returns [[ck m1] [ck m2] [ck m3]...]."
+  [moves]
   (apply concat (map (fn [[ck mvs]]
                        (let [ms (partition 2 mvs)]
                          (map (fn [k m] 
                                 [k (vec m)]) (take (count ms) (repeat ck)) ms))) moves)))
 
 (defn enumerate-paths
+  "Returns all of the paths whose depth is equal to or less than the depth
+   of the first path found. Shape of return is [[p1] [p2] [p3]...]."
   ([board-veh obj-k]
    (enumerate-paths board-veh (flatten-moves (compress-moves board-veh obj-k)) board/end-state?
                     compress-moves flatten-moves board/invoke-move obj-k [] #{} #{board-veh} 0 Integer/MAX_VALUE))
