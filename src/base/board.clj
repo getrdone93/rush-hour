@@ -1,16 +1,26 @@
 (ns rush-hour.base.board)
 
-(defn gen-board [d]
+(defn gen-board
+  "Returns a [[{:vehicle :key} {:vehicle :key}...]...] where each sub
+   [] is a row and each map represents a cell."
+  [d]
   (mapv #(vec %)
         (partition d (take (* d d) (repeat {:vehicle :open})))))
 
-(defn six-board [] (gen-board 6))
+(defn six-board
+  "Returns a board with 6 by 6 dimensions."
+  []
+  (gen-board 6))
 
-(defn bounds-check [dim nums]
+(defn bounds-check
+  "Returns true if nums are within bounds, false otherwise."
+  [dim nums]
   (every? true? (map #(and (> % -1) (< % dim))
                      (flatten nums))))
 
-(defn space-check [board veh-key [bx by] [ex ey]]
+(defn space-check
+  "Returns true if veh-key has open space before or after it, false otherwise."
+  [board veh-key [bx by] [ex ey]]
   (let [n-bg-sp (-> board (nth bx) (nth by) :vehicle)
         n-end-sp (-> board (nth ex) (nth ey) :vehicle)]
     (or (and (= n-bg-sp :open)
@@ -19,10 +29,14 @@
              (= n-end-sp :open)))))
 
 (defn move
+  "Moves mv-veh-k according to mv-func and returns vector, which indicates
+  [location valid-move?]. If valid-move? is false, location is the original
+  location of mv-veh-k in board-veh."
   ([{board :board
      {{loc :location} mv-veh-k} :vehicle}
     mv-veh-k
-    mv-func] (move board loc mv-veh-k mv-func bounds-check space-check))
+    mv-func]
+   (move board loc mv-veh-k mv-func bounds-check space-check))
   ([board
     [[bx by] [ex ey] :as loc]
     mv-veh-k
@@ -39,13 +53,25 @@
          [loc false])
        [loc false]))))
 
-(defn right-or-down [board-veh mv-veh-k]
+(defn right-or-down
+  "Returns a vector, [location valid-move?], where if valid-move?
+   is false the original location is returned, otherwise the new
+   location is returned. It may be shifted right or down one depending
+   on the orientation of the corresponding vehicle."
+  [board-veh mv-veh-k]
   (move board-veh mv-veh-k inc))
 
-(defn left-or-up [board-veh mv-veh-k]
+(defn left-or-up
+  "Returns a vector, [location valid-move?], where if valid-move?
+   is false the original location is returned, otherwise the new
+   location is returned. It may be shifted left or up one depending
+   on the orientation of the corresponding vehicle."
+  [board-veh mv-veh-k]
   (move board-veh mv-veh-k dec))
 
-(defn enumerate-coords [[bx by] [ex ey]]
+(defn enumerate-coords
+  "Returns a vector of points that lie between two points."
+  [[bx by] [ex ey]]
   (let [x-rng (range bx (inc ex))
         y-rng (range by (inc ey))
         [xs ys] (if (= (count x-rng) 1)
@@ -55,26 +81,37 @@
             [x y]) xs ys)))
 
 (defn vehicle-locs
-  ([vehicles] (vehicle-locs vehicles enumerate-coords))
+  "By default uses enumerate-coords to enumerate the coordinates
+   of each vehicle in vehicles."
+  ([vehicles]
+   (vehicle-locs vehicles enumerate-coords))
   ([vehicles enum-func]
    (mapv (fn [[ck {[[bx by :as bg] [ex ey :as ed]] :location}]]
            (mapv (fn [loc]
                    [ck loc]) (enum-func bg ed))) vehicles)))
 
 (defn sync-meta
-  ([{vhs :vehicle}] (sync-meta (six-board) (vehicle-locs vhs)))
+  "Syncs a board with the values in veh-locs and returns the
+   sync'd board. By default, a new (six-board) is generated."
+  ([{vhs :vehicle}]
+   (sync-meta (six-board) (vehicle-locs vhs)))
   ([board veh-locs]
   (let [flat-vl (apply concat veh-locs)]
     (reduce (fn [agg [ck [x y]]]
               (assoc-in agg [x y] {:vehicle ck})) board flat-vl))))
 
-(defn invoke-move [{board :board vehs :vehicle} mv-veh-k n-loc]
+(defn invoke-move
+  "Moves the mv-veh-k to n-loc in board-veh and returns a new board-veh."
+  [{board :board vehs :vehicle} mv-veh-k n-loc]
   (let [n-vehs (assoc-in vehs [mv-veh-k :location] n-loc)]
       {:board (sync-meta {:vehicle n-vehs :board board})
        :vehicle n-vehs}))
 
 (defn one-direct-veh-move
-  ([board-veh mv-veh-k move-func] (one-direct-veh-move board-veh mv-veh-k move-func []))
+  "Moves mv-veh-k by a move-func as long as the moves are valid
+   and returns all of the locations."
+  ([board-veh mv-veh-k move-func]
+   (one-direct-veh-move board-veh mv-veh-k move-func []))
   ([{board :board
      {{loc :location} mv-veh-k :as vehs} :vehicle :as board-veh}
     mv-veh-k
@@ -88,22 +125,36 @@
        res))))
 
 (defn all-direct-veh-move
-  ([board-veh mv-veh-k] (all-direct-veh-move board-veh mv-veh-k left-or-up right-or-down))
+  "Moves mv-veh-k all possible directions and returns all of the possible
+  locations."
+  ([board-veh mv-veh-k]
+   (all-direct-veh-move board-veh mv-veh-k left-or-up right-or-down))
   ([board-veh mv-veh-k left-move-func right-move-func]
    (vec (concat (one-direct-veh-move board-veh mv-veh-k left-move-func)
                    (one-direct-veh-move board-veh mv-veh-k right-move-func)))))
 
 (defn move-all-vehicles
-  ([board-veh] (move-all-vehicles board-veh all-direct-veh-move))
+  "Returns a map where each entry represents the possible
+   locations a vehicle can move, {:vehicle-key [loc1 loc2 loc3 ...]}."
+  ([board-veh]
+   (move-all-vehicles board-veh all-direct-veh-move))
   ([{board :board vehs :vehicle :as board-veh} all-dvm-func]
    (reduce (fn [agg ck]
              (assoc agg ck (all-dvm-func board-veh ck))) {} (keys vehs))))
 
-(defn end-state? [{{{loc :location} obj-k} :vehicle}
+(defn end-state?
+  "Returns true if obj-k is in end state, false otherwise. This is
+   only valid for boards of dimension of 6."
+  [{{{loc :location} obj-k} :vehicle}
                        obj-k]
   (= loc [[4 2] [5 2]]))
 
 (defn turing-machine
+  "Performs each action in actions starting at start-state until obj-k is found
+   to be in the correct location, thus signifying an end state. Returns [valid? states],
+   where if valid? is true, then the end state was reached. states contains all of
+   the states from invoking the first action on start-state, the second on that result
+   and so on."
   ([start-state actions obj-k]
    (turing-machine start-state actions invoke-move end-state? obj-k [start-state]))
   ([current-state [[ck mp] & actions] inv-move-func end-state-func obj-k states]
@@ -114,7 +165,10 @@
      (let [next-state (inv-move-func current-state ck mp)]
        (turing-machine next-state actions inv-move-func end-state-func obj-k (conj states next-state))))))
 
-(defn optimal-paths [board-veh obj-k all-paths]
+(defn optimal-paths
+  "Returns {:valid [path1 path2 path3...] :invalid [path1 path2 path3...]}
+   where valid and invalid refer to the validity of each path."
+  [board-veh obj-k all-paths]
   (let [[valid invalid] (partition-by #(true? (first %))
                           (map #(turing-machine board-veh % obj-k)
                                (first (partition-by count
